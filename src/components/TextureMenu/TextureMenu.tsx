@@ -11,7 +11,7 @@ import { textureMenuMachine } from "./textureMenuMachine";
 import "./styles.css";
 
 const textureLoad$ = eventBus.ofType<TextureLoadEvent>("textureLoad").pipe(
-  distinct((event) => (event.data.image as HTMLImageElement).src),
+  distinct((event) => (event.data.map.image as HTMLImageElement).src),
   bufferTime(1000),
   filter((events) => events.length > 0),
   map((events) => events.map((event) => event.data))
@@ -28,7 +28,7 @@ const TextureMenu = () => {
       {/* Loop through all the textures and create an image for each texture */}
       {textures.map((texture, index) => (
         <TextureMenuItem
-          textureUrl={texture.image.src}
+          textureUrl={texture.map.image.src}
           key={index}
           textureMenuService={service}
         />

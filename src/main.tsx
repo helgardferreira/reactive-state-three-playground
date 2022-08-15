@@ -22,8 +22,9 @@ eventBus.trigger(fromEvent(window, "pointerdown"));
 eventBus.trigger(fromEvent(window, "drag"));
 eventBus.trigger(fromEvent(window, "dragend"));
 eventBus.trigger(fromEvent(window, "dragstart"));
-const handleDragOver = (e: DragEvent) => e.preventDefault();
-window.addEventListener("dragover", handleDragOver);
+const preventDefaultDrag = (e: DragEvent) => e.preventDefault();
+window.addEventListener("dragover", preventDefaultDrag);
+window.addEventListener("drop", preventDefaultDrag);
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(
   <React.StrictMode>

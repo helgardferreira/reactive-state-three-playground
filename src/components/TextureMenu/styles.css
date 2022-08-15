@@ -6,6 +6,11 @@
   z-index: 1;
   padding: 8px;
   border-radius: 8px;
+  display: flex;
+  flex-direction: column;
+  height: calc(100vh - 40px);
+  overflow-y: auto;
+  gap: 8px;
 }
 
 .menu-item {
@@ -15,4 +20,5 @@
 .menu-item > img {
   max-width: 200px;
   height: auto;
+  border-radius: 8px;
 }

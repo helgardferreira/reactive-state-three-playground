@@ -2,11 +2,9 @@ import { merge, ReplaySubject, Subscription, take } from "rxjs";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { DEG2RAD } from "three/src/math/MathUtils";
-import floorPavementTexture from "../assets/textures/floor-pavement/floor_pavement_diff_4k.jpg";
-import brownPlanks from "../assets/textures/weathered-brown-planks/weathered_brown_planks_diff_4k.jpg";
-import woodCabinet from "../assets/textures/wood-cabinet/wood_cabinet_worn_long_diff_4k.jpg";
 import eventBus from "../EventBus";
 import { RaycastEvent } from "../events/RaycastEvent";
+import { TextureLoadEventData } from "../events/TextureLoadEvent";
 import { UpdateTextureEvent } from "../events/UpdateTextureEvent";
 import textureLoader from "./loaders/TextureLoader";
 import { Raycaster } from "./Raycaster";
@@ -16,7 +14,7 @@ export class Viewer {
   private scene: THREE.Scene;
   private camera: THREE.PerspectiveCamera;
   private controls: OrbitControls;
-  private textureMap: Map<string, THREE.Texture> = new Map();
+  private textureMap: Map<string, TextureLoadEventData> = new Map();
   private raycaster: Raycaster;
   private subscriptions: Subscription[] = [];
 
@@ -51,14 +49,19 @@ export class Viewer {
   }
 
   private loadTextures = () => {
-    const textures$ = merge(
-      textureLoader.load(floorPavementTexture),
-      textureLoader.load(woodCabinet),
-      textureLoader.load(brownPlanks)
-    );
+    const artisticTexture = textureLoader.load({
+      basecolor: import("../assets/textures/artistic-tile/basecolor.jpg"),
+      ambientOcclusion: import(
+        "../assets/textures/artistic-tile/ambientOcclusion.jpg"
+      ),
+      height: import("../assets/textures/artistic-tile/height.png"),
+      metallic: import("../assets/textures/artistic-tile/metallic.jpg"),
+      normal: import("../assets/textures/artistic-tile/normal.jpg"),
+      roughness: import("../assets/textures/artistic-tile/roughness.jpg"),
+    });
 
-    textures$.subscribe(({ data }) => {
-      this.textureMap.set(data.image.src, data);
+    artisticTexture.subscribe(({ data }) => {
+      this.textureMap.set(data.map.image.src, data);
     });
   };
 
@@ -187,7 +190,18 @@ export class Viewer {
         const intersectedObject = event.data.intersects[0]?.object;
         if (intersectedObject) {
           if (texture && this.hasStandardMaterialMesh(intersectedObject)) {
-            intersectedObject.material.map = texture;
+            intersectedObject.material.map = texture.map;
+            if (texture.aoMap) intersectedObject.material.aoMap = texture.aoMap;
+            // if (texture.displacementMap)
+            //   intersectedObject.material.displacementMap =
+            //     texture.displacementMap;
+            if (texture.metalnessMap)
+              intersectedObject.material.metalnessMap = texture.metalnessMap;
+            if (texture.roughnessMap)
+              intersectedObject.material.roughnessMap = texture.roughnessMap;
+            if (texture.normalMap)
+              intersectedObject.material.normalMap = texture.normalMap;
+
             intersectedObject.material.needsUpdate = true;
           }
         }
