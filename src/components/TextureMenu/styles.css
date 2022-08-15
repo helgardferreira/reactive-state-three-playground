@@ -1,0 +1,18 @@
+.menu-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background-color: #1e293b;
+  z-index: 1;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.menu-item {
+  display: flex;
+}
+
+.menu-item > img {
+  max-width: 200px;
+  height: auto;
+}
