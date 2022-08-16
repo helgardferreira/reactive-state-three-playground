@@ -1,14 +1,6 @@
-import {
-  concat,
-  delay,
-  from,
-  merge,
-  ReplaySubject,
-  Subscription,
-  take,
-  tap,
-} from "rxjs";
-import { concatMap, map, mergeMap } from "rxjs/operators";
+import { Subscription } from "rxjs";
+import { set } from "lodash";
+import { withLatestFrom } from "rxjs/operators";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { DEG2RAD } from "three/src/math/MathUtils";
@@ -153,20 +145,7 @@ export class Viewer {
       eventBus.ofType("resize").subscribe(this.resizeCanvas),
       eventBus
         .ofType<UpdateTextureEvent>("updateTexture")
-        .pipe(
-          mergeMap((updateTextureEvent) =>
-            this.raycaster.raycast$.pipe(
-              take(1),
-              map(
-                (raycastEvent) =>
-                  [updateTextureEvent, raycastEvent] as [
-                    UpdateTextureEvent,
-                    RaycastEvent
-                  ]
-              )
-            )
-          )
-        )
+        .pipe(withLatestFrom(this.raycaster.raycast$))
         .subscribe(this.updateTexture)
     );
   };
@@ -213,17 +192,16 @@ export class Viewer {
     const intersectedObject = raycastEvent.data.intersects[0]?.object;
     if (intersectedObject) {
       if (texture && this.hasStandardMaterialMesh(intersectedObject)) {
-        intersectedObject.material.map = texture.map;
-        if (texture.aoMap) intersectedObject.material.aoMap = texture.aoMap;
+        const material = intersectedObject.material;
+        set(material, "map", texture.map);
+        if (texture.aoMap) set(material, "aoMap", texture.aoMap);
         // if (texture.displacementMap)
-        //   intersectedObject.material.displacementMap =
-        //     texture.displacementMap;
+        //   set(material, "displacementMap", texture.displacementMap);
         if (texture.metalnessMap)
-          intersectedObject.material.metalnessMap = texture.metalnessMap;
+          set(material, "metalnessMap", texture.metalnessMap);
         if (texture.roughnessMap)
-          intersectedObject.material.roughnessMap = texture.roughnessMap;
-        if (texture.normalMap)
-          intersectedObject.material.normalMap = texture.normalMap;
+          set(material, "roughnessMap", texture.roughnessMap);
+        if (texture.normalMap) set(material, "normalMap", texture.normalMap);
 
         intersectedObject.material.needsUpdate = true;
       }
