@@ -41,7 +41,6 @@ export class TextureLoader {
         map((texture) => {
           texture.wrapS = THREE.RepeatWrapping;
           texture.wrapT = THREE.RepeatWrapping;
-          // TODO: calculate how many times to repeat texture based on tile and floor size
           // this.texture.repeat.set(2, 2);
           texture.encoding = THREE.sRGBEncoding;
 
@@ -61,7 +60,6 @@ export class TextureLoader {
         //   map(([key, texture]) => {
         //     texture.wrapS = THREE.RepeatWrapping;
         //     texture.wrapT = THREE.RepeatWrapping;
-        //     // TODO: calculate how many times to repeat texture based on tile and floor size
         //     // this.texture.repeat.set(2, 2);
         //     texture.encoding = THREE.sRGBEncoding;
 

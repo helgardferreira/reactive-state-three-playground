@@ -25,7 +25,7 @@ export class Raycaster {
 
     this._dragendSub = eventBus
       .ofType<DragEvent>("dragend")
-      .pipe(delay(100))
+      .pipe(delay(10))
       .subscribe(this.resetMousePointer);
 
     eventBus.trigger(this.raycast$);

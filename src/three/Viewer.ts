@@ -1,4 +1,14 @@
-import { merge, ReplaySubject, Subscription, take } from "rxjs";
+import {
+  concat,
+  delay,
+  from,
+  merge,
+  ReplaySubject,
+  Subscription,
+  take,
+  tap,
+} from "rxjs";
+import { concatMap, map, mergeMap } from "rxjs/operators";
 import * as THREE from "three";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { DEG2RAD } from "three/src/math/MathUtils";
@@ -60,9 +70,11 @@ export class Viewer {
       roughness: import("../assets/textures/artistic-tile/roughness.jpg"),
     });
 
-    artisticTexture.subscribe(({ data }) => {
-      this.textureMap.set(data.map.image.src, data);
-    });
+    this.subscriptions.push(
+      artisticTexture.subscribe(({ data }) => {
+        this.textureMap.set(data.map.image.src, data);
+      })
+    );
   };
 
   private createObjects = () => {
@@ -141,6 +153,20 @@ export class Viewer {
       eventBus.ofType("resize").subscribe(this.resizeCanvas),
       eventBus
         .ofType<UpdateTextureEvent>("updateTexture")
+        .pipe(
+          mergeMap((updateTextureEvent) =>
+            this.raycaster.raycast$.pipe(
+              take(1),
+              map(
+                (raycastEvent) =>
+                  [updateTextureEvent, raycastEvent] as [
+                    UpdateTextureEvent,
+                    RaycastEvent
+                  ]
+              )
+            )
+          )
+        )
         .subscribe(this.updateTexture)
     );
   };
@@ -178,38 +204,32 @@ export class Viewer {
     );
   };
 
-  // TODO: move method to custom object primitive class
-  public updateTexture = (event: UpdateTextureEvent) => {
-    const texture = this.textureMap.get(event.data);
+  public updateTexture = ([updateTextureEvent, raycastEvent]: [
+    UpdateTextureEvent,
+    RaycastEvent
+  ]) => {
+    const texture = this.textureMap.get(updateTextureEvent.data);
 
-    const lastValue$ = new ReplaySubject<RaycastEvent>(1);
-    this.raycaster.raycast$.subscribe(lastValue$);
+    const intersectedObject = raycastEvent.data.intersects[0]?.object;
+    if (intersectedObject) {
+      if (texture && this.hasStandardMaterialMesh(intersectedObject)) {
+        intersectedObject.material.map = texture.map;
+        if (texture.aoMap) intersectedObject.material.aoMap = texture.aoMap;
+        // if (texture.displacementMap)
+        //   intersectedObject.material.displacementMap =
+        //     texture.displacementMap;
+        if (texture.metalnessMap)
+          intersectedObject.material.metalnessMap = texture.metalnessMap;
+        if (texture.roughnessMap)
+          intersectedObject.material.roughnessMap = texture.roughnessMap;
+        if (texture.normalMap)
+          intersectedObject.material.normalMap = texture.normalMap;
 
-    this.subscriptions.push(
-      lastValue$.pipe(take(1)).subscribe((event) => {
-        const intersectedObject = event.data.intersects[0]?.object;
-        if (intersectedObject) {
-          if (texture && this.hasStandardMaterialMesh(intersectedObject)) {
-            intersectedObject.material.map = texture.map;
-            if (texture.aoMap) intersectedObject.material.aoMap = texture.aoMap;
-            // if (texture.displacementMap)
-            //   intersectedObject.material.displacementMap =
-            //     texture.displacementMap;
-            if (texture.metalnessMap)
-              intersectedObject.material.metalnessMap = texture.metalnessMap;
-            if (texture.roughnessMap)
-              intersectedObject.material.roughnessMap = texture.roughnessMap;
-            if (texture.normalMap)
-              intersectedObject.material.normalMap = texture.normalMap;
-
-            intersectedObject.material.needsUpdate = true;
-          }
-        }
-      })
-    );
+        intersectedObject.material.needsUpdate = true;
+      }
+    }
   };
 
-  // TODO: work on dispose method
   public dispose = () => {
     this.renderer.dispose();
     this.controls.dispose();

@@ -7,6 +7,7 @@ export interface Typegen0 {
   };
   invokeSrcNameMap: {
     dragEnd$: "done.invoke.menu:invocation[0]";
+    undo$: "done.invoke.menu:invocation[1]";
   };
   missingImplementations: {
     actions: never;
@@ -15,11 +16,15 @@ export interface Typegen0 {
     delays: never;
   };
   eventsCausingActions: {
+    redo: "REDO";
     setCurrentMenuItem: "DRAG";
-    updateSceneTexture: "DROP";
+    undo: "UNDO";
+    updatePast: "DROP";
+    updateSceneTexture: "DROP" | "REDO" | "UNDO";
   };
   eventsCausingServices: {
     dragEnd$: "xstate.init";
+    undo$: "xstate.init";
   };
   eventsCausingGuards: {};
   eventsCausingDelays: {};
